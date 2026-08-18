@@ -4,156 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tender Intelligence</title>
-
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 40px 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: auto;
-        }
-
-        h1 {
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-        }
-
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 25px;
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 14px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .label {
-            font-weight: bold;
-            color: #555;
-        }
-
-        .value {
-            text-align: right;
-        }
-
-        .section {
-            margin-top: 30px;
-        }
-
-        .section h2 {
-            font-size: 20px;
-        }
-
-        ul {
-            padding-left: 20px;
-        }
-
-        li {
-            margin: 10px 0;
-        }
-
-        .warning {
-            margin-top: 25px;
-            padding: 15px;
-            background: #fff3cd;
-            border-radius: 8px;
-            color: #664d03;
-        }
-
-        .footer {
-            margin-top: 25px;
-            color: #777;
-            font-size: 13px;
-        }
+        body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 40px 20px; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+        .title { font-size: 24px; font-weight: bold; margin-bottom: 25px; }
+        .row { display: flex; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid #eee; }
+        .label { font-weight: bold; color: #555; }
+        .value { text-align: right; }
+        .section { margin-top: 30px; }
+        .section h2 { font-size: 20px; }
+        ul { padding-left: 20px; }
+        li { margin: 10px 0; }
+        .warning { margin-top: 25px; padding: 15px; background: #fff3cd; border-radius: 8px; color: #664d03; }
+        .footer { margin-top: 25px; color: #777; font-size: 13px; }
+        .error { padding: 15px; background: #f8d7da; color: #842029; border-radius: 8px; }
     </style>
 </head>
-
 <body>
-
 <div class="container">
-
     <h1>Tender Intelligence</h1>
-
-    <div class="subtitle">
-        Simplifying government tender information
-    </div>
-
-    <div class="card">
-
-        <div class="title">
-            Laying of CC Road at Kisan Nagar, Karimnagar
-        </div>
-
-        <div class="row">
-            <div class="label">Department</div>
-            <div class="value">Karimnagar Municipal Corporation</div>
-        </div>
-
-        <div class="row">
-            <div class="label">Location</div>
-            <div class="value">Karimnagar</div>
-        </div>
-
-        <div class="row">
-            <div class="label">Tender Value</div>
-            <div class="value">₹40.57 lakh</div>
-        </div>
-
-        <div class="row">
-            <div class="label">Closing Date</div>
-            <div class="value">12 June 2026</div>
-        </div>
-
-        <div class="row">
-            <div class="label">Eligibility</div>
-            <div class="value">Not extracted yet</div>
-        </div>
-
-        <div class="section">
-
-            <h2>Checks Before Bidding</h2>
-
-            <ul>
-                <li>Eligibility</li>
-                <li>EMD</li>
-                <li>Required experience</li>
-                <li>Completion period</li>
-                <li>Payment terms</li>
-            </ul>
-
-        </div>
-
-        <div class="warning">
-            Demo based on prototype data. Always verify the official tender document before bidding.
-        </div>
-
-    </div>
-
-    <div class="footer">
-        Tender Intelligence V0.1 — Prototype
-    </div>
-
+    <div class="subtitle">Simplifying government tender information</div>
+    <div id="app">Loading tender data...</div>
 </div>
+<script>
+async function loadTender() {
+    const app = document.getElementById('app');
+    try {
+        const response = await fetch('./data/tenders.json');
+        if (!response.ok) throw new Error('Could not load tender data');
+        const data = await response.json();
+        const tender = data.tenders[0];
 
+        app.innerHTML = `
+            <div class="card">
+                <div class="title">${tender.work}</div>
+                <div class="row"><div class="label">Department</div><div class="value">${tender.department}</div></div>
+                <div class="row"><div class="label">Location</div><div class="value">${tender.location}</div></div>
+                <div class="row"><div class="label">Tender Value</div><div class="value">₹${tender.value_lakh} lakh</div></div>
+                <div class="row"><div class="label">Closing Date</div><div class="value">${new Date(tender.closing_date).toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'})}</div></div>
+                <div class="row"><div class="label">Eligibility</div><div class="value">${tender.eligibility}</div></div>
+                <div class="section">
+                    <h2>Checks Before Bidding</h2>
+                    <ul>${tender.checks_before_bidding.map(item => `<li>${item}</li>`).join('')}</ul>
+                </div>
+                <div class="warning">Demo based on prototype data. Always verify the official tender document before bidding.</div>
+            </div>
+            <div class="footer">Tender Intelligence V0.2 — Data-driven prototype</div>
+        `;
+    } catch (error) {
+        app.innerHTML = `<div class="error">Unable to load tender data. ${error.message}</div>`;
+    }
+}
+loadTender();
+</script>
 </body>
 </html>
