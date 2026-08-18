@@ -1,0 +1,21 @@
+{
+  "version": "0.2",
+  "tenders": [
+    {
+      "tender_id": "2026_MUNICIPA_705117_1",
+      "work": "Laying of CC Road at Kisan Nagar, Karimnagar",
+      "location": "Karimnagar",
+      "department": "Karimnagar Municipal Corporation",
+      "value_lakh": 40.57,
+      "closing_date": "2026-06-12",
+      "eligibility": "Not extracted yet",
+      "checks_before_bidding": [
+        "Eligibility",
+        "EMD",
+        "Required experience",
+        "Completion period",
+        "Payment terms"
+      ]
+    }
+  ]
+}
