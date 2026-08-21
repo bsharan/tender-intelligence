@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tender Intelligence — Document Analyzer</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f8;margin:0;padding:40px 20px}.container{max-width:900px;margin:auto}h1{margin-bottom:6px}.sub{color:#666;margin-bottom:25px}.card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 3px 12px rgba(0,0,0,.08);margin-bottom:18px}.upload{border:2px dashed #bbb;padding:35px;text-align:center;border-radius:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.item{padding:14px;background:#f7f8fa;border-radius:8px}.label{font-size:12px;color:#666}.value{font-weight:bold;margin-top:5px}.note{padding:12px;background:#fff3cd;border-radius:8px;color:#664d03;font-size:13px}.button{display:inline-block;margin-top:15px;padding:11px 16px;border:0;border-radius:7px;background:#111;color:#fff;cursor:pointer}.error{color:#842029;background:#f8d7da;padding:12px;border-radius:8px}.back{display:inline-block;margin-bottom:18px;color:#333}.raw{max-height:220px;overflow:auto;white-space:pre-wrap;font-size:12px;background:#f7f7f7;padding:12px;border-radius:8px}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<a class="back" href="./">← Back to Tender Intelligence</a>
+<h1>Tender Document Analyzer</h1>
+<div class="sub">V0.4 prototype — upload a tender PDF and extract basic bidding information in your browser.</div>
+
+<div class="card">
+<div class="upload">
+<strong>Select an official tender PDF</strong><br><br>
+<input id="pdf" type="file" accept="application/pdf">
+<div id="status" style="margin-top:12px;color:#666">No document selected.</div>
+</div>
+</div>
+
+<div id="result"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+const input=document.getElementById('pdf');
+const status=document.getElementById('status');
+const result=document.getElementById('result');
+
+function firstMatch(text, patterns){for(const p of patterns){const m=text.match(p);if(m)return m[1]?.trim()||m[0].trim()}return 'Not detected';}
+function money(text){return firstMatch(text,[/(?:estimated|tender)\s+(?:cost|value)[^₹\d]{0,40}(?:₹\s*)?([\d,]+(?:\.\d+)?)/i,/₹\s*([\d,]+(?:\.\d+)?)/i]);}
+function date(text){return firstMatch(text,[/(?:last|closing|submission)\s+date[^\d]{0,30}(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})/i,/(\d{1,2}[\/-]\d{1,2}[\/-]20\d{2})/]);}
+function field(label,value){return `<div class="item"><div class="label">${label}</div><div class="value">${value}</div></div>`}
+
+input.addEventListener('change',async()=>{
+ const file=input.files[0]; if(!file)return;
+ status.textContent=`Reading ${file.name}...`; result.innerHTML='';
+ try{
+  const bytes=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){
+   const page=await pdf.getPage(i); const content=await page.getTextContent();
+   text+=content.items.map(x=>x.str).join(' ')+'\n';
+  }
+  const title=firstMatch(text,[/(?:name of work|name of the work|title of work)\s*[:\-]?\s*([^\n]{5,160})/i]);
+  const value=money(text); const closing=date(text);
+  result.innerHTML=`<div class="card"><h2>Extracted Tender Snapshot</h2><div class="grid">${field('Work / Title',title)}${field('Tender / Estimated Value',value)}${field('Closing / Submission Date',closing)}${field('Pages',pdf.numPages)}</div><div class="note" style="margin-top:15px">This is an extraction prototype, not a bidding decision. Verify every field against the official tender document before bidding.</div></div><div class="card"><h3>Extracted Text Preview</h3><div class="raw"></div></div>`;
+  result.querySelector('.raw').textContent=text.slice(0,12000);
+  status.textContent='Extraction complete.';
+ }catch(e){status.textContent='Extraction failed.';result.innerHTML=`<div class="card"><div class="error">Could not read this PDF in the browser: ${e.message}</div></div>`}
+});
+</script>
+</body>
+</html>
