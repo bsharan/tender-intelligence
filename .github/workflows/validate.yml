@@ -1,0 +1,31 @@
+name: Validate Tender Intelligence
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate tender JSON
+        run: python -m json.tool data/tenders.json > /dev/null
+
+      - name: Check required files
+        run: |
+          test -f index.html
+          test -f data/tenders.json
+          test -f README.md
+          echo "Required project files are present."
+
+      - name: Validate HTML entry point
+        run: |
+          grep -q "<title>Tender Intelligence</title>" index.html
+          grep -q "data/tenders.json" index.html
+          echo "HTML entry point passed basic checks."
